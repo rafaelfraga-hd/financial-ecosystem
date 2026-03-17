@@ -53,7 +53,7 @@ The ledger-service does not create business transactions or define their structu
 
 It receives **pre-built ledger entries** from the transaction-service and persists them.
 
-- `transactions` stores the business transaction context
+- `transactions` (managed by transaction-service) stores the business transaction context
 - `ledger_entries` stores the financial postings generated from that transaction
 
 Each ledger entry belongs to exactly one transaction.
@@ -67,7 +67,7 @@ The ledger enforces consistency rules over incoming entries:
 - credits are stored as positive amounts
 - debits are stored as negative amounts
 - transfers must generate two ledger entries under the same `transaction_id`
-- for each `transaction_id`, the sum of all `amount` values should be zero
+- when multiple entries exist for a transaction, the sum of all `amount` values should be zero
 
 ---
 
@@ -79,6 +79,28 @@ Balances are derived from:
 
 - `ledger_entries` as the source of truth
 - `daily_account_balances` as a materialized daily snapshot
+
+---
+
+## Data Ownership and Boundaries
+
+The ledger-service owns its database schema and does not rely on foreign keys to external services.
+
+- `account_id` is treated as an external reference
+- account validation is performed by the transaction-service
+- ledger-service focuses strictly on financial postings
+
+This ensures service independence and aligns with microservice architecture principles.
+
+---
+
+## Persistence and Schema Management
+
+- PostgreSQL is used as the database
+- schema evolution is managed via Flyway migrations
+- schema is versioned incrementally (`V1`, `V2`, ...)
+
+The `ledger_entries` table is append-only and represents the core financial dataset.
 
 ---
 
@@ -99,6 +121,8 @@ Balances are derived from:
 - transaction-service is responsible for constructing ledger entries
 - ledger-service is responsible for persisting and validating them
 - independent from balance representation
+- no foreign keys to external services (microservice boundary)
+- database schema managed via migrations (Flyway)
 
 ---
 
