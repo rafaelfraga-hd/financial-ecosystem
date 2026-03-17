@@ -1,0 +1,5 @@
+CREATE TABLE flyway_bootstrap_test
+(
+    id         BIGSERIAL PRIMARY KEY,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
