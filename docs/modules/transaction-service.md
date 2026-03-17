@@ -1,13 +1,15 @@
 # Transaction Service
 
-The transaction-service is responsible for orchestrating all financial operations.
+The transaction-service is responsible for orchestrating all business transactions.
 
 ---
 
 ## Responsibilities
 
-- create accounts
-- handle deposits, withdrawals and transfers
+- create and manage accounts
+- orchestrate deposits, withdrawals and transfers
+- create business transactions
+- construct ledger entries for each transaction
 - validate business rules
 - enforce limits
 - manage concurrency
@@ -19,7 +21,9 @@ The transaction-service is responsible for orchestrating all financial operation
 ### Deposit
 
 - validate account status
-- create ledger entry
+- create business transaction
+- construct ledger entry (credit)
+- send entry to ledger-service for persistence
 - update daily balance
 
 ---
@@ -29,7 +33,9 @@ The transaction-service is responsible for orchestrating all financial operation
 - validate account status
 - check balance + overdraft
 - validate daily limits
-- create ledger entry
+- create business transaction
+- construct ledger entry (debit)
+- send entry to ledger-service for persistence
 - update daily balance
 
 ---
@@ -39,7 +45,11 @@ The transaction-service is responsible for orchestrating all financial operation
 - validate source and destination accounts
 - check limits and balance
 - acquire locks (ordered)
-- create ledger entries
+- create business transaction
+- construct ledger entries:
+    - debit entry (source account)
+    - credit entry (destination account)
+- send entries to ledger-service for persistence
 - update balances
 - release locks
 
@@ -73,17 +83,38 @@ Before executing a transaction:
 
 ---
 
+## Transaction Semantics
+
+Each operation results in a **business transaction**, which is then translated into one or more ledger entries.
+
+- deposit → 1 credit entry
+- withdraw → 1 debit entry
+- transfer → 2 entries (debit + credit)
+
+---
+
 ## Concurrency
 
 - per-account lock
 - ordered locking for transfers
+
+Ensures consistency in a single-instance system.
 
 ---
 
 ## Dependencies
 
 - ledger-service
-- repositories (accounts, balances, limits)
+- repositories (accounts, balances, limits, transactions)
+
+---
+
+## Design Decisions
+
+- separation between transaction orchestration and ledger recording
+- transaction-service constructs ledger entries
+- ledger-service persists and validates entries
+- double-entry model for balanced transactions
 
 ---
 
@@ -92,4 +123,4 @@ Before executing a transaction:
 - idempotency support
 - retry mechanisms
 - better error handling
-- double-entry modeling
+- stronger consistency guarantees during transaction processing

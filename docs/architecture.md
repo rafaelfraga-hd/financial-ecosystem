@@ -22,13 +22,14 @@ Future versions will evolve towards distributed services.
 
 ### transaction-service
 
-Handles all financial operations:
+Handles business transaction orchestration:
 
 - deposits
 - withdrawals
 - transfers
 - account validation
 - limit enforcement
+- transaction creation
 
 Acts as the entry point for all business operations.
 
@@ -38,9 +39,12 @@ Acts as the entry point for all business operations.
 
 Responsible for financial record keeping:
 
-- stores immutable ledger entries
-- acts as the source of truth
-- enables auditing and traceability
+- persists immutable ledger entries
+- materializes business transactions into account postings
+- enforces double-entry consistency (sum of entries = 0)
+- acts as the source of truth for balances
+
+Enables auditing and traceability.
 
 ---
 
@@ -59,8 +63,8 @@ Responsible for financial record keeping:
    - account status
    - balance / overdraft
    - daily limits
-3. Locks are acquired (if needed)
-4. Ledger entries are created via `ledger-service`
+3. A business transaction is created
+4. Transaction is materialized into ledger entries via `ledger-service`
 5. Daily balance is updated
 6. Locks are released
 
@@ -70,7 +74,7 @@ Responsible for financial record keeping:
 
 The system follows a **ledger + snapshot model**:
 
-- ledger entries = source of truth
+- ledger entries = source of truth (derived from transactions)
 - daily balances = derived state
 
 This avoids relying on a mutable balance field.
