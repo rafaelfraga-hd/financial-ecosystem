@@ -7,6 +7,7 @@ import com.rafaelfraga.ledger.repository.LedgerEntryRepository
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.Instant
+import java.util.Enumeration
 import java.util.UUID
 
 @Service
@@ -33,5 +34,9 @@ class LedgerEntryService(
 
         entry.validateConsistency()
         return repository.save(entry)
+    }
+
+    fun findAll() : List<LedgerEntry> {
+         return repository.findAll().toList()
     }
 }
