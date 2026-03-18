@@ -4,6 +4,7 @@ import com.rafaelfraga.ledger.controller.response.LedgerEntryErrorResponse
 import com.rafaelfraga.ledger.exception.LedgerConsistencyException
 import org.springframework.http.HttpStatus
 import org.springframework.http.ResponseEntity
+import org.springframework.http.converter.HttpMessageNotReadableException
 import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
@@ -13,13 +14,19 @@ import java.time.Instant
 class LedgerExceptionHandler {
 
     @ExceptionHandler(LedgerConsistencyException::class)
-    fun handleLedgerConsistencyException(ex: LedgerConsistencyException) : ResponseEntity<LedgerEntryErrorResponse> {
-        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(
-            LedgerEntryErrorResponse(Instant.now(),
-                422,
-                LEDGER_CONSISTENCY_ERROR,
-                message = ex.message ?: DEFAULT_LEDGER_ERROR)
-        )
+    fun handleLedgerConsistencyException(
+        ex: LedgerConsistencyException
+    ): ResponseEntity<LedgerEntryErrorResponse> {
+        return ResponseEntity
+            .status(HttpStatus.UNPROCESSABLE_ENTITY)
+            .body(
+                LedgerEntryErrorResponse(
+                    timestamp = Instant.now(),
+                    status = 422,
+                    error = LedgerExceptionMessages.LEDGER_CONSISTENCY_ERROR,
+                    message = ex.message ?: LedgerExceptionMessages.DEFAULT_LEDGER_ERROR
+                )
+            )
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
@@ -29,7 +36,7 @@ class LedgerExceptionHandler {
         val message = ex.bindingResult.fieldErrors
             .firstOrNull()
             ?.defaultMessage
-            ?: DEFAULT_VALIDATION_ERROR
+            ?: LedgerExceptionMessages.DEFAULT_VALIDATION_ERROR
 
         return ResponseEntity
             .status(HttpStatus.BAD_REQUEST)
@@ -37,8 +44,24 @@ class LedgerExceptionHandler {
                 LedgerEntryErrorResponse(
                     timestamp = Instant.now(),
                     status = 400,
-                    error = VALIDATION_ERROR,
+                    error = LedgerExceptionMessages.VALIDATION_ERROR,
                     message = message
+                )
+            )
+    }
+
+    @ExceptionHandler(HttpMessageNotReadableException::class)
+    fun handleHttpMessageNotReadableException(
+        ex: HttpMessageNotReadableException
+    ): ResponseEntity<LedgerEntryErrorResponse> {
+        return ResponseEntity
+            .status(HttpStatus.BAD_REQUEST)
+            .body(
+                LedgerEntryErrorResponse(
+                    timestamp = Instant.now(),
+                    status = 400,
+                    error = LedgerExceptionMessages.VALIDATION_ERROR,
+                    message = LedgerExceptionMessages.MALFORMED_OR_MISSING_REQUEST_BODY
                 )
             )
     }
@@ -50,5 +73,6 @@ class LedgerExceptionHandler {
 
         const val VALIDATION_ERROR = "Validation error"
         const val DEFAULT_VALIDATION_ERROR = "Request validation failed"
+        const val MALFORMED_OR_MISSING_REQUEST_BODY = "Malformed JSON or missing required fields"
     }
 }
