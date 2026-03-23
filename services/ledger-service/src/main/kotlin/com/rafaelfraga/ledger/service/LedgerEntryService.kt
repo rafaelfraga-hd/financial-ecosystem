@@ -4,6 +4,8 @@ import com.rafaelfraga.ledger.domain.LedgerEntry
 import com.rafaelfraga.ledger.domain.LedgerEntryType
 import com.rafaelfraga.ledger.domain.validations.validateConsistency
 import com.rafaelfraga.ledger.repository.LedgerEntryRepository
+import com.rafaelfraga.ledger.service.filter.LedgerEntryFilter
+import com.rafaelfraga.ledger.service.filter.LedgerEntrySpecification
 import org.springframework.stereotype.Service
 import java.math.BigDecimal
 import java.time.Instant
@@ -36,7 +38,11 @@ class LedgerEntryService(
         return repository.save(entry)
     }
 
-    fun findAll() : List<LedgerEntry> {
-         return repository.findAll().toList()
+    fun findAll(): List<LedgerEntry> {
+        return repository.findAll()
+    }
+
+    fun findEntries(filter: LedgerEntryFilter): List<LedgerEntry> {
+        return repository.findAll() //LedgerEntrySpecification.withFilter(filter))
     }
 }
